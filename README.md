@@ -1,7 +1,7 @@
 A2 GEANT4 SIMULATION
 ==================
 
-works with GEANT4.9.6 p02
+works with GEANT4.9.6 p02 -- do not update Geant4 despite deprecations
 
 Prerequisites
 -------------
@@ -21,4 +21,9 @@ In order to install, just:
 * cmake ../
 * make
 
-option to speed up compilation, make -j (her put the number of CPU)
+option to speed up compilation, make -j (here put the number of CPU)
+
+Differences between this fork and master repository at A2-Collaboration
+=======================================================================
+
+Modifications enable visualization with DAWN

@@ -44,15 +44,19 @@
 # Output an empty detector
 #/vis/viewer/flush
 
+#/vis/scene/add/trajectories
+#/vis/scene/add/hits
+
 #
 # for drawing the tracks
 # (if too many tracks cause core dump => storeTrajectory 0)
 #
 /tracking/storeTrajectory 1
 /vis/scene/endOfEventAction accumulate
-#
-# At end of each run, an automatic flush causes graphical output.
+
+#At end of each run, an automatic flush causes graphical output.
 #/run/beamOn 1
+
 # When you exit Geant4, you will find a file called scene-0.heprep.zip.
 # Unzipping this will give you three separate HepRep files suitable for
 # viewing in WIRED.
@@ -69,7 +73,9 @@
 /vis/viewer/set/viewpointThetaPhi 130. 40.
 #/vis/viewer/set/viewpointThetaPhi 0. 0.
 /vis/viewer/set/style surface
+
 #/vis/drawVolume
+
 #/vis/scene/endOfEventAction accumulate
 /tracking/storeTrajectory 1
 #/vis/geometry/set/visibility CNIN 0 false

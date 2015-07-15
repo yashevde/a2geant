@@ -52,7 +52,8 @@
 # (if too many tracks cause core dump => storeTrajectory 0)
 #
 /tracking/storeTrajectory 1
-/vis/scene/endOfEventAction accumulate
+/vis/scene/endOfEventAction accumulate <-1>
+#<N> is the number of events that it can store, with N<0 being unlimited. 
 
 #At end of each run, an automatic flush causes graphical output.
 #/run/beamOn 1

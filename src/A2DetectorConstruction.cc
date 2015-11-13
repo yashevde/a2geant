@@ -39,6 +39,7 @@ A2DetectorConstruction::A2DetectorConstruction(G4String detSet)
   fUseMWPC=0;
   fUseTOF=0;
   fUseCherenkov=0;
+  fUsePT=0;
 
   fCrystalBall=NULL;
   fTAPS=NULL;
@@ -48,6 +49,7 @@ A2DetectorConstruction::A2DetectorConstruction(G4String detSet)
   fWorldSolid=NULL;
   fWorldLogic=NULL;
   fWorldPhysi=NULL;
+  fPT=NULL;
 
   fTOFparFile="TOF.par";
   //fHemiGap=0.4*cm;
@@ -84,13 +86,14 @@ G4VPhysicalVolume* A2DetectorConstruction::Construct()
   fUseMWPC=0;
   fUseTOF=0;
   fUseCherenkov=0;
+  fUsePT=0;
 
   // read the set up file DetectorSetup.mac
-  // get the pointer to the User Interface manager 
+  // get the pointer to the User Interface manager
   G4UImanager* UI = G4UImanager::GetUIpointer();
   G4String command = "/control/execute "+fDetectorSetup;//macros/DetectorSetup.mac";
   UI->ApplyCommand(command);
-  if(fUseCB==0&&fUseTAPS==0&&fUsePID==0&&fUseMWPC==0&&fUseTOF==0&&fUseCherenkov==0&&fUseTarget==G4String("NO")){
+  if(fUseCB==0&&fUseTAPS==0&&fUsePID==0&&fUseMWPC==0&&fUseTOF==0&&fUseCherenkov==0&&fUsePT==0&&fUseTarget==G4String("NO")){
     G4cout<<"G4VPhysicalVolume* A2DetectorConstruction::Construct() Don't seem to be simulating any detectors, please check you are using an appopriate detector setup. I tried the file "<<fDetectorSetup<< " I will exit here before the computer explodes"<<G4endl;
     exit(0);
   }
@@ -102,16 +105,16 @@ G4VPhysicalVolume* A2DetectorConstruction::Construct()
   G4PhysicalVolumeStore::GetInstance()->Clean();
   G4LogicalVolumeStore::GetInstance()->Clean();
   G4SolidStore::GetInstance()->Clean();
-  //     
+  //
   // World
   //
   fWorldSolid = new G4Box("World",				//its name
 			  20*m,20*m,20*m);	//its size
-                         
+
   fWorldLogic = new G4LogicalVolume(fWorldSolid,		//its solid
 				    G4NistManager::Instance()->FindOrBuildMaterial("G4_AIR"),	//its material
                                    "World");		//its name
-                                   
+
   fWorldPhysi = new G4PVPlacement(0,			//no rotation
   				 G4ThreeVector(),	//at (0,0,0)
                                  fWorldLogic,		//its logical volume
@@ -131,7 +134,7 @@ G4VPhysicalVolume* A2DetectorConstruction::Construct()
   }
   if(fUseTAPS){
     G4cout<<"A2DetectorConstruction::Construct() Turn on the taps"<<G4endl;
-    G4cout<<"TAPS setup "<<fTAPSSetupFile<<" with "<<fTAPSN<<" crystals, "<<fTAPSZ/cm<<" cm from the target"<<G4endl; 
+    G4cout<<"TAPS setup "<<fTAPSSetupFile<<" with "<<fTAPSN<<" crystals, "<<fTAPSZ/cm<<" cm from the target"<<G4endl;
     fTAPS=new A2DetTAPS(fTAPSSetupFile,fTAPSN,fNPbWO4,fTAPSZ);
     //fTAPS=new A2DetTAPS();
     fTAPS->SetIsInteractive(fIsInteractive);
@@ -145,12 +148,19 @@ G4VPhysicalVolume* A2DetectorConstruction::Construct()
     else {G4cerr<<"There are 2 possible PIDS, please set UsePID to be 1 (2003) or 2 (2007)"<<G4endl; exit(1);}
   }
 
+  if(fUsePT){
+    G4cout<<"A2DetectorConstruction::Construct() Make the PTSD"<< fUsePT<<G4endl;
+    fPT=new A2PolarizedTarget();
+    if(fUsePT==1) fPT->Construct(fWorldLogic);
+    else {G4cerr<<"well, you want the Polarized Target to be a detector, right?"<<G4endl; exit(1);}
+  }
+
   if(fUseMWPC){
     G4cout<<"A2DetectorConstruction::Construct() Make the Wire Chambers"<<G4endl;
     if(fUseMWPC==2)G4cout<<"With the anode wires created"<<G4endl;
     fMWPC = new A2DetMWPC();
     if(fUseMWPC==2)fMWPC->UseAnodes(true);
-    fMWPC ->Construct(fWorldLogic); 
+    fMWPC ->Construct(fWorldLogic);
   }
   if(fUseTOF){
     G4cout<<"A2DetectorConstruction::Construct() ToF time!"<<G4endl;
@@ -181,7 +191,7 @@ G4VPhysicalVolume* A2DetectorConstruction::Construct()
     }
     fTarget->Construct(fWorldLogic);
   }
-  //                                        
+  //
   // Visualization attributes
   //
   fWorldLogic->SetVisAttributes (G4VisAttributes::Invisible);
@@ -209,7 +219,7 @@ void A2DetectorConstruction::UpdateGeometry()
 
 
 void A2DetectorConstruction::DefineMaterials()
-{ 
+{
   G4double density,z,a,fractionmass;
   G4int ncomponents;
 
@@ -217,7 +227,7 @@ void A2DetectorConstruction::DefineMaterials()
   G4NistManager* NistManager=G4NistManager::Instance();
 
   //Rohacell. From cbsim.  The formula is (C4 H7 N 0)n. Density is 0.057 g/cm3.  (V.K)
- G4Material *Roha=new G4Material("A2_ROHACELL",density=0.057*g/cm3, ncomponents=4);  
+ G4Material *Roha=new G4Material("A2_ROHACELL",density=0.057*g/cm3, ncomponents=4);
  Roha->AddElement(NistManager->FindOrBuildElement(6),4);
  Roha->AddElement(NistManager->FindOrBuildElement(1),7);
  Roha->AddElement(NistManager->FindOrBuildElement(7),1);
@@ -251,7 +261,7 @@ void A2DetectorConstruction::DefineMaterials()
  fglass->AddElement(NistManager->FindOrBuildElement(3),fractionmass=0.2320000E-02);
  //NistManager->RegisterMaterial(fglass);
 
- //Plastic. From cbsim 
+ //Plastic. From cbsim
  G4Material *plastic=new G4Material("A2_PLASTIC",density=1.19*g/cm3, ncomponents=2);
  plastic->AddElement(NistManager->FindOrBuildElement(6),fractionmass=0.8562844);
  plastic->AddElement(NistManager->FindOrBuildElement(1),fractionmass=0.1437155);
@@ -287,9 +297,9 @@ void A2DetectorConstruction::DefineMaterials()
 //////////
 //Materials for Polarized Target:
 //////////
- 
-  G4String symbol;             
-  G4int iz, n;                 //iz=number of protons  in an isotope; 
+
+  G4String symbol;
+  G4int iz, n;                 //iz=number of protons  in an isotope;
                                // n=number of nucleons in an isotope;
   G4int natoms;
   G4double abundance;
@@ -315,7 +325,7 @@ void A2DetectorConstruction::DefineMaterials()
   G4Material* A2_HeButanol=new G4Material("A2_HeButanol", density=0.6*g/cm3, ncomponents=2);
   A2_HeButanol->AddMaterial(A2_HeMix, fractionmass=0.094);
   A2_HeButanol->AddMaterial(A2_Butanol, fractionmass=0.906);
-  
+
 //Stainless steel (18% Cr, 10% Ni, 72% Fe):
   G4Material* A2_SS=new G4Material("A2_SS", density=8000.*kg/m3, ncomponents=3);
   A2_SS->AddElement(NistManager->FindOrBuildElement(24), fractionmass=0.18);
@@ -348,12 +358,12 @@ void A2DetectorConstruction::DefineMaterials()
 
   /*Now useG4NistManager
  //This function illustrates the possible ways to define materials
- 
+
   G4String symbol;             //a=mass of a mole;
-  G4double a, z, density;      //z=mean number of protons;  
-  G4int iz, n;                 //iz=number of protons  in an isotope; 
+  G4double a, z, density;      //z=mean number of protons;
+  G4int iz, n;                 //iz=number of protons  in an isotope;
                              // n=number of nucleons in an isotope;
-  
+
   G4int ncomponents, natoms;
   G4double abundance, fractionmass;
 
@@ -386,7 +396,7 @@ G4Element* O  = new G4Element("Oxygen"  ,symbol="O" , z= 8., a= 16.00*g/mole);
  new G4Material("Iron", z=26., a=55.85*g/mole, density=7.87*g/cm3);
  new G4Material("liquidArgon", z=18., a= 39.95*g/mole, density= 1.390*g/cm3);
  new G4Material("Lead"     , z=82., a= 207.19*g/mole, density= 11.35*g/cm3);
- new G4Material("Graphite"     , z=6., a= 12.01*g/mole, density= 2.267*g/cm3);//Note cbsim had rho=1.70?? 
+ new G4Material("Graphite"     , z=6., a= 12.01*g/mole, density= 2.267*g/cm3);//Note cbsim had rho=1.70??
  new G4Material("Copper"     , z=29, a= 63.546*g/mole, density= 8.96*g/cm3);
  //Targets
  new G4Material("LH2"     , z=1., a= 1.00794*g/mole, density= 0.0708*g/cm3);
@@ -399,14 +409,14 @@ G4Element* O  = new G4Element("Oxygen"  ,symbol="O" , z= 8., a= 16.00*g/mole);
 // define a material from elements.   case 1: chemical molecule
 //
 
-G4Material* H2O = 
+G4Material* H2O =
 new G4Material("Water", density= 1.000*g/cm3, ncomponents=2);
 H2O->AddElement(H, natoms=2);
 H2O->AddElement(O, natoms=1);
-// overwrite computed meanExcitationEnergy with ICRU recommended value 
+// overwrite computed meanExcitationEnergy with ICRU recommended value
 H2O->GetIonisation()->SetMeanExcitationEnergy(75.0*eV);
 
-G4Material* Sci = 
+G4Material* Sci =
 new G4Material("Scintillator", density= 1.032*g/cm3, ncomponents=2);
 Sci->AddElement(C, natoms=9);
 Sci->AddElement(H, natoms=10);
@@ -415,13 +425,13 @@ G4Material* NaI=new G4Material("NaI", density= 3.67*g/cm3, ncomponents=2);
 NaI->AddElement(Na, fractionmass=0.1533733);
 NaI->AddElement(I, fractionmass=0.8466268);
 
-G4Material* Myl = 
+G4Material* Myl =
 new G4Material("Mylar", density= 1.397*g/cm3, ncomponents=3);
 Myl->AddElement(C, natoms=10);
 Myl->AddElement(H, natoms= 8);
 Myl->AddElement(O, natoms= 4);
 
-G4Material* SiO2 = 
+G4Material* SiO2 =
 new G4Material("quartz",density= 2.200*g/cm3, ncomponents=2);
 SiO2->AddElement(Si, natoms=1);
 SiO2->AddElement(O , natoms=2);
@@ -430,7 +440,7 @@ SiO2->AddElement(O , natoms=2);
 // define a material from elements.   case 2: mixture by fractional mass
 //
 
-G4Material* Air = 
+G4Material* Air =
 new G4Material("Air"  , density= 1.290*mg/cm3, ncomponents=2);
 Air->AddElement(N, fractionmass=0.7);
 Air->AddElement(O, fractionmass=0.3);
@@ -476,7 +486,7 @@ Air->AddElement(O, fractionmass=0.3);
 // define a material from elements and/or others materials (mixture of mixtures)
 //
 
-G4Material* Aerog = 
+G4Material* Aerog =
 new G4Material("Aerogel", density= 0.200*g/cm3, ncomponents=3);
 Aerog->AddMaterial(SiO2, fractionmass=62.5*perCent);
 Aerog->AddMaterial(H2O , fractionmass=37.4*perCent);
@@ -486,13 +496,13 @@ Aerog->AddElement (C   , fractionmass= 0.1*perCent);
 // examples of gas in non STP conditions
 //
 
-G4Material* CO2 = 
+G4Material* CO2 =
 new G4Material("CarbonicGas", density= 27.*mg/cm3, ncomponents=2,
                               kStateGas, 325.*kelvin, 50.*atmosphere);
 CO2->AddElement(C, natoms=1);
 CO2->AddElement(O, natoms=2);
- 
-G4Material* steam = 
+
+G4Material* steam =
 new G4Material("WaterSteam", density= 0.3*mg/cm3, ncomponents=1,
                              kStateGas, 500.*kelvin, 2.*atmosphere);
 steam->AddMaterial(H2O, fractionmass=1.);
@@ -505,7 +515,7 @@ G4Material* Vacuum =
 new G4Material("Vacuum", z=1., a=1.01*g/mole,density= universe_mean_density,
                            kStateGas, 2.73*kelvin, 3.e-18*pascal);
 
-G4Material* beam = 
+G4Material* beam =
 new G4Material("Beam", density= 1.e-5*g/cm3, ncomponents=1,
                        kStateGas, STP_Temperature, 2.e-2*bar);
 beam->AddMaterial(Air, fractionmass=1.);
@@ -516,4 +526,3 @@ G4cout << *(G4Material::GetMaterialTable()) << G4endl;
 fMaterialDefault  = Vacuum;
   */
 }
-

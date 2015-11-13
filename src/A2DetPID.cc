@@ -29,7 +29,7 @@ A2DetPID::A2DetPID(){
   fUPS3Logic=NULL;
   fPMTRLogic=NULL;
   fBRTULogic=NULL;
-    
+
   fPIDSD=NULL;
 }
 
@@ -40,7 +40,7 @@ G4VPhysicalVolume* A2DetPID::Construct1(G4LogicalVolume* MotherLogical,G4double 
   //Build the original PID from 2003
 
   fMotherLogic=MotherLogical;
-  
+
   //some parameters
   //Note it is full length not half length for this constructor!
   fzpos=0*cm;
@@ -76,7 +76,7 @@ G4VPhysicalVolume* A2DetPID::Construct1(G4LogicalVolume* MotherLogical,G4double 
   MakeDetector();
 
   fMyLogic->SetVisAttributes (G4VisAttributes::GetInvisible());
- 
+
   return fMyPhysi;
 }
 G4VPhysicalVolume* A2DetPID::Construct2(G4LogicalVolume* MotherLogical,G4double Z0){
@@ -94,7 +94,7 @@ G4VPhysicalVolume* A2DetPID::Construct2(G4LogicalVolume* MotherLogical,G4double 
   fpid_xs=2*fpid_rin*tan(fpid_theta/2);//short lenght
   fpid_xl=2*fpid_rout*tan(fpid_theta/2);//long length
 
- 
+
   //Make the light guide shape
   MakeLightGuide();
   MakePhotomultipliers();
@@ -123,6 +123,8 @@ G4VPhysicalVolume* A2DetPID::Construct2(G4LogicalVolume* MotherLogical,G4double 
   visatt->SetForceWireframe(true);
   fMyLogic->SetVisAttributes(visatt);
 
+//-Include tracking classes from Geant4?
+
   //  fMyLogic->SetVisAttributes (G4VisAttributes::Invisible);
 
   return fMyPhysi;
@@ -141,7 +143,7 @@ void A2DetPID::MakeDetector(){
     G4ThreeVector dpos1(xpos,ypos,fzpos);
     dpos1.rotateZ(fpid_theta/2); //rotate so flat at top
                  //this matches the pid positions with PID_MC.dat
-    //Check the hit positions, should collate with AcquRoot setup 
+    //Check the hit positions, should collate with AcquRoot setup
     //G4cout<<"PID "<<i<<" "<<xpos<< " "<<ypos<<" "<<" "<<pid_R<<" "<<fzpos<<" "<<dpos1.phi()/deg<<G4endl;
     fPIDPhysi[i]=new G4PVPlacement(Rot[i],dpos1,fPIDLogic,"PID",fMyLogic,false,i+1);
      fLGPhysi[i]=new  G4PVPlacement(Rot[i],G4ThreeVector(xpos,ypos,fzpos+fpid_z/2+flg_z-flg12_z).rotateZ(fpid_theta/2),fLGLogic,"LG",fMyLogic,false,i);
@@ -151,13 +153,13 @@ void A2DetPID::MakeDetector(){
     RotPMTR[i]=new G4RotationMatrix();
     RotPMTR[i]->rotateZ(pid_angle);
     new G4PVPlacement(RotPMTR[i],G4ThreeVector(0,0,fpmtr_z),fPMTRLogic,"PMTR",fMyLogic,false,i);
-    
+
  }
-  new G4PVPlacement(0,G4ThreeVector(0,0,fzpos-(fpid_z/2-3/2*mm)),fUPS1Logic,"UPS1",fMyLogic,false,101); 
-  new G4PVPlacement(0,G4ThreeVector(0,0,fzpos-(fpid_z/2+3/2*mm)),fUPS2Logic,"UPS2",fMyLogic,false,102); 
+  new G4PVPlacement(0,G4ThreeVector(0,0,fzpos-(fpid_z/2-3/2*mm)),fUPS1Logic,"UPS1",fMyLogic,false,101);
+  new G4PVPlacement(0,G4ThreeVector(0,0,fzpos-(fpid_z/2+3/2*mm)),fUPS2Logic,"UPS2",fMyLogic,false,102);
   new G4PVPlacement(0,G4ThreeVector(0,0,fzpos-(fpid_z/2+3*mm)),fUPS3Logic,"UPS3",fMyLogic,false,103);
   //only place brass tube for old pid
-  if(fBRTULogic) new G4PVPlacement(0,G4ThreeVector(0,0,-19.575*cm),fBRTULogic,"UPS1",fMyLogic,false,104); 
+  if(fBRTULogic) new G4PVPlacement(0,G4ThreeVector(0,0,-19.575*cm),fBRTULogic,"UPS1",fMyLogic,false,104);
 
 }
 void A2DetPID::MakeSingleDetector(){
@@ -167,7 +169,7 @@ void A2DetPID::MakeSingleDetector(){
   if(!fPIDSD){
     G4SDManager* SDman = G4SDManager::GetSDMpointer();
     fPIDSD = new A2SD("PIDSD",fNPids);
-    SDman->AddNewDetector( fPIDSD );		
+    SDman->AddNewDetector( fPIDSD );
   }
   fPIDLogic->SetSensitiveDetector(fPIDSD);
   fregionPID->AddRootLogicalVolume(fPIDLogic);
@@ -253,19 +255,19 @@ void A2DetPID::MakeSupports1(){
   G4Tubs* BRTU=new G4Tubs("BRTU",5.455*cm,5.550*cm,77.5/2*mm,0*deg,360*deg);
   fBRTULogic=new G4LogicalVolume(BRTU,fNistManager->FindOrBuildMaterial("A2_BRASS"),"BRTU");
 
-  //c Aluminium ring at upstream end, 
-  //c Note UPS1 should have a more complex, 24 sided outer structure 
-  //c to match the shape of the inside of the PMT barrel.  The thickest 
-  //c part of this structure would however only be 2.04mm and therefore 
-  //c the extra complexity would add little to the accuracy and also would 
-  //c complicate the tracking.  
+  //c Aluminium ring at upstream end,
+  //c Note UPS1 should have a more complex, 24 sided outer structure
+  //c to match the shape of the inside of the PMT barrel.  The thickest
+  //c part of this structure would however only be 2.04mm and therefore
+  //c the extra complexity would add little to the accuracy and also would
+  //c complicate the tracking.
   G4Tubs* UPS1=new G4Tubs("UPS1",4.585*cm,4.785*cm,3/2*mm,0*deg,360*deg);
   fUPS1Logic=new G4LogicalVolume(UPS1,fNistManager->FindOrBuildMaterial("G4_Al"),"UPS1");
   //c UPS2 is the central part of the aluminium upstream support ring (with
   //c the largest diameter) which holds it in place in the brass tube.
    G4Tubs* UPS2=new G4Tubs("UPS2",4.585*cm,5.35*cm,3/2*mm,0*deg,360*deg);
    fUPS2Logic=new G4LogicalVolume(UPS2,fNistManager->FindOrBuildMaterial("G4_Al"),"UPS2");
-  //c UPS3 is the sloping edge of the upstream aluminium support ring 
+  //c UPS3 is the sloping edge of the upstream aluminium support ring
   //c which allows us to locate it easily into the brass tube.
    G4Cons* UPS3=new G4Cons("UPS3",4.585*cm,5.05*cm,4.585*cm,5.35*cm,3/2*mm,0*deg,360*deg);
     fUPS3Logic=new G4LogicalVolume(UPS3,fNistManager->FindOrBuildMaterial("G4_Al"),"UPS3");
@@ -287,20 +289,20 @@ void A2DetPID::MakeSupports1(){
 
 }
 void A2DetPID::MakeSupports2(){
- 
-  //c Aluminium ring at upstream end, 
-  //c Note UPS1 should have a more complex, 24 sided outer structure 
-  //c to match the shape of the inside of the PMT barrel.  The thickest 
-  //c part of this structure would however only be 2.04mm and therefore 
-  //c the extra complexity would add little to the accuracy and also would 
-  //c complicate the tracking.  
+
+  //c Aluminium ring at upstream end,
+  //c Note UPS1 should have a more complex, 24 sided outer structure
+  //c to match the shape of the inside of the PMT barrel.  The thickest
+  //c part of this structure would however only be 2.04mm and therefore
+  //c the extra complexity would add little to the accuracy and also would
+  //c complicate the tracking.
   G4Tubs* UPS1=new G4Tubs("UPS1",5.625*cm,5.825*cm,3/2*mm,0*deg,360*deg);
   fUPS1Logic=new G4LogicalVolume(UPS1,fNistManager->FindOrBuildMaterial("A2_PLASTIC"),"UPS1");
   //c UPS2 is the central part of the aluminium upstream support ring (with
   //c the largest diameter) which holds it in place in the brass tube.
    G4Tubs* UPS2=new G4Tubs("UPS2",5.625*cm,6.39*cm,3/2*mm,0*deg,360*deg);
    fUPS2Logic=new G4LogicalVolume(UPS2,fNistManager->FindOrBuildMaterial("A2_PLASTIC"),"UPS2");
-  //c UPS3 is the sloping edge of the upstream aluminium support ring 
+  //c UPS3 is the sloping edge of the upstream aluminium support ring
   //c which allows us to locate it easily into the brass tube.
    G4Cons* UPS3=new G4Cons("UPS3",5.625*cm,6.09*cm,5.625*cm,6.39*cm,3/2*mm,0*deg,360*deg);
     fUPS3Logic=new G4LogicalVolume(UPS3,fNistManager->FindOrBuildMaterial("A2_PLASTIC"),"UPS3");

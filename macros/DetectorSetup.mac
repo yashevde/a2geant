@@ -18,6 +18,9 @@
 /A2/det/usePID 0
 /A2/det/setPIDZ 0. cm
 
+####Use the Polarized Target
+####/A2/det/usePT 1
+
 #set to 1 to not create the anode wires, 2 to create the anode wires
 /A2/det/useMWPC 0
 
@@ -31,6 +34,9 @@
 #/A2/det/useTarget Solid
 #/A2/det/targetMaterial G4_Pb
 #/A2/det/targetMaterial G4_GRAPHITE
+
+//-Make a new usable "item" so that I don't have to rely on structure of PID 
+
 #####Polarised target
 /A2/det/useTarget Polarized
 #/A2/det/targetMaterial A2_HeButanol

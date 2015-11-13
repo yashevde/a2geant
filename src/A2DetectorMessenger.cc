@@ -15,10 +15,10 @@
 A2DetectorMessenger::A2DetectorMessenger(
                                            A2DetectorConstruction* A2Det)
 :fA2Detector(A2Det)
-{ 
+{
   fA2Dir = new G4UIdirectory("/A2/");
   fA2Dir->SetGuidance("UI commands of this example");
-  
+
   fdetDir = new G4UIdirectory("/A2/det/");
   fdetDir->SetGuidance("detector control");
 
@@ -42,6 +42,11 @@ A2DetectorMessenger::A2DetectorMessenger(
   //fUsePIDCmd->SetRange("UsePID=0 don't build PID or UsePID!=0 build PID");
   fUsePIDCmd->AvailableForStates(G4State_PreInit,G4State_Idle);
 
+  fUsePTCmd = new G4UIcmdWithAnInteger("/A2/det/usePT",this); //
+  fUsePTCmd->SetGuidance("Construct PT");//
+  fUsePTCmd->SetParameterName("UsePT",false);//
+  fUsePTCmd->AvailableForStates(G4State_PreInit,G4State_Idle);//
+
   fUseMWPCCmd = new G4UIcmdWithAnInteger("/A2/det/useMWPC",this);
   fUseMWPCCmd->SetGuidance("Construct MWPC");
   fUseMWPCCmd->SetParameterName("UseMWPC",false);
@@ -57,13 +62,13 @@ A2DetectorMessenger::A2DetectorMessenger(
   fTargetMatCmd->SetGuidance("Select the target material");
   fTargetMatCmd->SetParameterName("TargetMaterial",false);
   fTargetMatCmd->AvailableForStates(G4State_PreInit,G4State_Idle);
-  
+
   fTargetLengthCmd = new G4UIcmdWithADoubleAndUnit("/A2/det/setTargetLength",this);
   fTargetLengthCmd->SetGuidance("Set target cell length");
   fTargetLengthCmd->SetParameterName("TargetLength",false);
   fTargetLengthCmd->SetUnitCategory("Length");
   fTargetLengthCmd->AvailableForStates(G4State_PreInit,G4State_Idle);
-  
+
   // Target magnetic coils type
   fTargetMagneticCoilsCmd = new G4UIcmdWithAString("/A2/det/targetMagneticCoils",this);
   fTargetMagneticCoilsCmd->SetGuidance("Select the target magnetic coils type");
@@ -133,7 +138,7 @@ A2DetectorMessenger::A2DetectorMessenger(
   //fUseCherenkovCmd->SetRange("UseCherenkov=0 don't build Cherenkov or UseCherenkov!=0 build Cherenkov");
   fUseCherenkovCmd->AvailableForStates(G4State_PreInit,G4State_Idle);
 
- 
+
 }
 
 
@@ -144,6 +149,9 @@ A2DetectorMessenger::~A2DetectorMessenger()
   delete fUseCBCmd;
   delete fUsePIDCmd;
   delete fUseTargetCmd;
+
+//  delete fUsePTCmd;
+
   delete fTargetMatCmd;
   delete fTargetMagneticCoilsCmd;
   delete fUpdateCmd;
@@ -165,7 +173,7 @@ A2DetectorMessenger::~A2DetectorMessenger()
 
 
 void A2DetectorMessenger::SetNewValue(G4UIcommand* command,G4String newValue)
-{ 
+{
 
 
   if( command == fUseTAPSCmd )
@@ -177,57 +185,57 @@ void A2DetectorMessenger::SetNewValue(G4UIcommand* command,G4String newValue)
   if( command == fUsePIDCmd )
     { fA2Detector->SetUsePID(fUsePIDCmd->GetNewIntValue(newValue));}
 
+//  if( command == fUsePTCmd )
+//    { fA2Detector->SetUsePT(fUsePTCmd->GetNewIntValue(newValue));}
 
   if( command == fUseMWPCCmd )
     { fA2Detector->SetUseMWPC(fUseMWPCCmd->GetNewIntValue(newValue));}
 
   if( command == fUseCherenkovCmd )
     { fA2Detector->SetUseCherenkov(fUseCherenkovCmd->GetNewIntValue(newValue));}
-  
+
   if( command == fUpdateCmd )
     { fA2Detector->UpdateGeometry(); }
-  
+
   if( command == fUseTargetCmd )
     { fA2Detector->SetUseTarget(newValue);}
-  
+
   if( command == fTargetMatCmd )
     { fA2Detector->SetTargetMaterial(newValue);}
-    
+
   if ( command == fTargetMagneticCoilsCmd )
     { fA2Detector->SetTargetMagneticCoils(newValue); }
-  
+
   if( command == fTargetLengthCmd )
     { fA2Detector->SetTargetLength(fTargetLengthCmd->GetNewDoubleValue(newValue));}
-    
+
   // Target magnetic field map
   if( command == fTargetMagneticFieldCmd )
     { fA2Detector->SetTargetMagneticFieldMap(newValue); }
 
    if( command == fHemiGapCmd )
     { fA2Detector->SetHemiGap(fHemiGapCmd->GetNew3VectorValue(newValue));}
- 
+
   if( command == fTAPSFileCmd )
     { fA2Detector->SetTAPSFile(newValue);}
-  
+
   if( command == fTAPSZCmd )
     { fA2Detector->SetTAPSZ(fTAPSZCmd->GetNewDoubleValue(newValue));}
-  
-  
+
+
   if( command == fTAPSNCmd )
     {fA2Detector->SetTAPSN(fTAPSNCmd->GetNewIntValue(newValue));}
-  
+
   if( command == fTAPSPbCmd )
     {fA2Detector->SetTAPSPbWO4Rings(fTAPSPbCmd->GetNewIntValue(newValue));}
-  
+
   if( command == fPIDZCmd )
     { fA2Detector->SetPIDZ(fPIDZCmd->GetNewDoubleValue(newValue));}
-  
+
   if( command == fTOFFileCmd )
     { fA2Detector->SetTOFFile(newValue);}
-  
+
   if( command == fUseTOFCmd )
     { fA2Detector->SetUseTOF(fUseTOFCmd->GetNewIntValue(newValue));}
-  
+
  }
-
-

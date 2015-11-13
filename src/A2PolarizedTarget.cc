@@ -24,10 +24,12 @@ void A2PolarizedTarget::SetMagneticField(G4String &nameFileFieldMap)
 {
   // If nameFileFieldMap is a NULL string then do not set the target magnetic field
   if(nameFileFieldMap.isNull()) {G4cout<<"Warning A2PolarizedTarget::SetMagneticField No field map given, therefore there will be no field!"<<G4endl;return;}
-  
+
+//Are the magnetic field and solid target sections complicating the change? - Group 
+
   // Create magnetic field
   fMagneticField = new A2MagneticField();
-  
+
   // Read magnetic field map
   // Set this field as default and create trajectory calculator
   // Or, in case of a problem reading the field map, delete fMagneticField
@@ -61,21 +63,36 @@ G4VPhysicalVolume* A2PolarizedTarget::Construct(G4LogicalVolume *MotherLogic)
  fLength=20.0*mm;
  fRadius=0.5*mm;
 
- //Note: 
+ //Note:
  //l indicates length,
  //r indicates radius, which is always measured to outside of cylinder,
- //t indicates thickness. 
+ //t indicates thickness.
 
  //Also note: there are 2 approximations in the target geometries. When the tubes change thickness, there is no slope joining the different thicknesses. Also, when the ends of the tubes are rounded, this is approximated as a straight 90*degree cylinder.
- 
+
  G4double l_TRGT = 276.*mm + 67.*mm + 2*mm;
  G4double r_TRGT = 47.97*mm;
-  
+
  //Mother volume, a cylinder with at least a 1-mm space between it and the target in all directions:
  G4Tubs* MyShape=new G4Tubs("TRGT",0.,r_TRGT + 1.0*mm, l_TRGT/2 +1.0*mm,0*deg,360*deg);
  fMyLogic=new G4LogicalVolume(MyShape,fNistManager->FindOrBuildMaterial("G4_AIR"),"TRGT");
  fMyPhysi=new G4PVPlacement(0,G4ThreeVector(0,0, - 20.0*mm/2 - 11.5*mm - 231.5*mm + l_TRGT/2.),fMyLogic,"TRGT",fMotherLogic,false,1);
  fMyLogic->SetVisAttributes (G4VisAttributes::Invisible);
+}
+
+//Making the PT a sensitive detector "PTSD"
+void A2PolarizedTarget::MakeSensitiveDetector()
+{
+ fPT=new G4Trap("PT",fpt_x,fpt_y,fpt_z);
+ fPTLogic=new G4LogicalVolume(fPT,fNistManager->FindOrBuildMaterial("A2_HeButanol"),"PT"); //ARBEIT: material needs to be of the form G4_something_somethingelse? Link it to the string input for type of target
+  if(!fPTSD){
+   G4SDManager* SDman = G4SDManager::GetSDMpointer();
+   fPTSD = new A2SD("PTSD",fNPTs);
+   SDman->AddNewDetector( fPTSD );
+  }
+ fPTLogic->SetSensitiveDetector(fPTSD);
+ fregionPT->AddRootLogicalVolume(fPTLogic);
+}
 
  //Colours with thier corresponding materials used in the visualization:
  G4VisAttributes* SSVisAtt= new G4VisAttributes(G4Colour(0.8,0.8,0.8)); //stainless steel (grey)
@@ -97,7 +114,7 @@ G4VPhysicalVolume* A2PolarizedTarget::Construct(G4LogicalVolume *MotherLogic)
  new G4PVPlacement(0,G4ThreeVector(0,0,(l_SSO/2 + 42.5*mm + 67*mm - l_TRGT/2.)),SSOLogic,"SSO",fMyLogic,false,1);
  SSOLogic->SetVisAttributes(SSVisAtt);
 //  SSOLogic->SetVisAttributes(G4VisAttributes::Invisible);
- 
+
  //Outer copper cylinder:
  G4double l_CUO = 222.5*mm;
  G4double r_CUO = 29.0*mm;
@@ -120,7 +137,7 @@ G4VPhysicalVolume* A2PolarizedTarget::Construct(G4LogicalVolume *MotherLogic)
    new G4PVPlacement(0,G4ThreeVector(0,0,(l_NbTiC/2 + 119*mm + 67*mm - l_TRGT/2.)),NbTiCLogic,"NbTiC",fMyLogic,false,1);
    NbTiCLogic->SetVisAttributes(CyanVisAtt);
 //    NbTiCLogic->SetVisAttributes(G4VisAttributes::Invisible);
-   
+
    //Copper coil layer:
    G4double l_CUC = 136.0*mm;
    G4double r_CUC = 24.14*mm;
@@ -130,7 +147,7 @@ G4VPhysicalVolume* A2PolarizedTarget::Construct(G4LogicalVolume *MotherLogic)
    new G4PVPlacement(0,G4ThreeVector(0,0,(l_CUC/2 + 119*mm + 67*mm - l_TRGT/2.)),CUCLogic,"CUC",fMyLogic,false,1);
    CUCLogic->SetVisAttributes(CUVisAtt);
 //    CUCLogic->SetVisAttributes(G4VisAttributes::Invisible);
-   
+
    //Epoxy coil layer:
    G4double l_EPC = 136.0*mm;
    G4double r_EPC = 23.8*mm;
@@ -148,7 +165,7 @@ G4VPhysicalVolume* A2PolarizedTarget::Construct(G4LogicalVolume *MotherLogic)
    G4double yBoxSplitter = 0.1*mm;
    G4double zBoxSplitter = 136*mm;
    G4Box *boxSplitter = new G4Box("boxSplitter", xBoxSplitter, yBoxSplitter, zBoxSplitter);
-   
+
    // Layer1
    G4double lTube1 = 135.48*mm;
    G4double rTube1 =  24.46*mm;
@@ -164,7 +181,7 @@ G4VPhysicalVolume* A2PolarizedTarget::Construct(G4LogicalVolume *MotherLogic)
    new G4PVPlacement(0, G4ThreeVector(0.,0.,(lTube1/2. + 119*mm + 67*mm - l_TRGT/2.)), logicSaddleCoilsLayer1, "physSaddleCoilsLayer1", fMyLogic, false, 1);
    logicSaddleCoilsLayer1->SetVisAttributes(CyanVisAtt);
    //  logicSaddleCoilsLayer1->SetVisAttributes(G4VisAttributes::Invisible);
-   
+
    // Layer2
    G4double lTube2 = 135.88*mm;
    G4double rTube2 =  24.92*mm;
@@ -181,7 +198,7 @@ G4VPhysicalVolume* A2PolarizedTarget::Construct(G4LogicalVolume *MotherLogic)
    logicSaddleCoilsLayer2->SetVisAttributes(CyanVisAtt);
    //  logicSaddleCoilsLayer2->SetVisAttributes(G4VisAttributes::Invisible);
  }
- 
+
  //The coils are wrapped around part of a middle copper cylinder, which has 3 different thicknesses, 0.3, 0.7, and 1.2, labelled A, B, and C respectively, going up-beam.
  //Middle copper cylinder, part A, which the coils are wrapped around:
  G4double l_CUMA = 136.0*mm;
@@ -274,7 +291,7 @@ G4VPhysicalVolume* A2PolarizedTarget::Construct(G4LogicalVolume *MotherLogic)
  CUIDLogic->SetVisAttributes(CUVisAtt);
 //  CUIDLogic->SetVisAttributes(G4VisAttributes::Invisible);
 
- //The butenol target is encased in kapton. This cup has holes in it, which are ingnored. 
+ //The butenol target is encased in kapton. This cup has holes in it, which are ingnored.
  //Kapton outside cell, part A:
  G4double l_KAPA = 0.6*mm;
  G4double r_KAPA = 10.505*mm;
@@ -352,7 +369,7 @@ G4VPhysicalVolume* A2PolarizedTarget::Construct(G4LogicalVolume *MotherLogic)
  new G4PVPlacement(0,G4ThreeVector(0,0,(231.5*mm + 1.5*mm + l_HEC/2 - l_TRGT/2.)),HECLogic,"HEC",fMyLogic,false,1);
  HECLogic->SetVisAttributes(WhiteVisAtt);
 //  HECLogic->SetVisAttributes(G4VisAttributes::Invisible);
- 
+
  //He, part D:
  G4double l_HED = 0.5*mm;
  G4double r_HED = 19.5*mm;
@@ -376,7 +393,7 @@ G4VPhysicalVolume* A2PolarizedTarget::Construct(G4LogicalVolume *MotherLogic)
  //He, part F:
  G4double l_HEF = 122.0*mm;
  G4double r_HEF = 19.5*mm;
- G4double t_HEF = 7.0*mm; 
+ G4double t_HEF = 7.0*mm;
  G4Tubs* HEF=new G4Tubs("HEF",r_HEF-t_HEF,r_HEF,l_HEF/2,0*deg,360*deg);
  G4LogicalVolume* HEFLogic=new G4LogicalVolume(HEF,fNistManager->FindOrBuildMaterial("A2_HeMix"),"HEF");
  new G4PVPlacement(0,G4ThreeVector(0,0,(231.5*mm - l_HEF/2 - l_TRGT/2.)),HEFLogic,"HEF",fMyLogic,false,1);
@@ -384,7 +401,7 @@ G4VPhysicalVolume* A2PolarizedTarget::Construct(G4LogicalVolume *MotherLogic)
 //  HEFLogic->SetVisAttributes(G4VisAttributes::Invisible);
 
  //Windows (from outside, going up-beam):
- //The cylinders with the Ti windows attached were rounded on the down-beam end. This makes the approximation of 90*deg corners. 
+ //The cylinders with the Ti windows attached were rounded on the down-beam end. This makes the approximation of 90*deg corners.
  //Outer Ti window:
  G4double r_TIOW = 12.5*mm;
  G4double t_TIOW = 0.02*mm;
@@ -431,7 +448,7 @@ G4VPhysicalVolume* A2PolarizedTarget::Construct(G4LogicalVolume *MotherLogic)
  new G4PVPlacement(0,G4ThreeVector(0,0,(l_CUBA/2 + 256.5*mm + 67*mm - l_TRGT/2.)),CUBALogic,"CUBA",fMyLogic,false,1);
  CUBALogic->SetVisAttributes(CUVisAtt);
 //  CUBALogic->SetVisAttributes(G4VisAttributes::Invisible);
- 
+
  //Part B:
   G4double l_CUBB = 3.18*mm;
  G4double r_CUBB = 23.0*mm;
